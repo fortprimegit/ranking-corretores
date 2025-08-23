@@ -86,7 +86,3 @@ Os dados são puxados diretamente da sua planilha do Google Sheets, garantindo q
 - SheetJS (para exportação Excel)
 - jsPDF (para exportação PDF)
 
----
-
-**Desenvolvido por Manus AI** 🤖
-
