@@ -245,11 +245,15 @@
                         <canvas id="zonesChart" width="400" height="300"></canvas>
                     </div>
                 </div>
+                <div class="stat-card" style="margin-top: 20px; padding: 30px;">
+                    <h3 style="margin-bottom: 20px;">💡 Insights Especiais</h3>
+                    <div id="specialInsights" class="stats-grid"></div>
+                </div>
 
                 <div class="stat-card" style="margin-top: 20px; padding: 30px;">
                     <h3 style="margin-bottom: 20px;">📈 Performance Detalhada</h3>
                     <canvas id="performanceChart" width="800" height="400"></canvas>
-                </div>
+                </div></div>
             </div>
         </div>
 
@@ -423,7 +427,9 @@
 
                 if (position >= 1 && position <= 3) {
                     zoneClass = 'titles';
-                    zoneIcon = '🏆';
+                    if (position === 1) zoneIcon = '🏆';
+                    else if (position === 2) zoneIcon = '🥈';
+                    else if (position === 3) zoneIcon = '🥉';
                 } else if (position >= 4 && position <= 12) {
                     zoneClass = 'libertadores';
                     zoneIcon = '⭐';
@@ -460,9 +466,9 @@
 
         function updateAnalytics() {
             const totalCorretores = corretores.length;
-            const totalVendasLiq = corretores.reduce((sum, c) => sum + c['V.Líq'], 0);
-            const totalPropostas = corretores.reduce((sum, c) => sum + c['PROPOSTAS'], 0);
-            const totalVendas = corretores.reduce((sum, c) => sum + c['VENDAS'], 0);
+            const totalVendasLiq = corretores.reduce((sum, c) => sum + c["V.Líq"], 0);
+            const totalPropostas = corretores.reduce((sum, c) => sum + c["PROPOSTAS"], 0);
+            const totalVendas = corretores.reduce((sum, c) => sum + c["VENDAS"], 0);
 
             totalCorretoresSpan.textContent = totalCorretores;
             totalVendasLiqSpan.textContent = `${totalVendasLiq.toFixed(0)}`;
@@ -472,20 +478,20 @@
             taxaConversaoSpan.textContent = `${taxaConversao}%`;
 
             // Top 5 Performers Chart
-            const sortedByVendasLiq = [...corretores].sort((a, b) => b['V.Líq'] - a['V.Líq']).slice(0, 5);
-            const topNames = sortedByVendasLiq.map(c => c['CORRETOR']);
-            const topVendasLiq = sortedByVendasLiq.map(c => c['V.Líq']);
+            const sortedByVendasLiq = [...corretores].sort((a, b) => b["V.Líq"] - a["V.Líq"]).slice(0, 5);
+            const topNames = sortedByVendasLiq.map(c => c["CORRETOR"]);
+            const topVendasLiq = sortedByVendasLiq.map(c => c["V.Líq"]);
 
             if (topPerformersChart) topPerformersChart.destroy();
-            topPerformersChart = new Chart(document.getElementById('topPerformersChart').getContext('2d'), {
-                type: 'bar',
+            topPerformersChart = new Chart(document.getElementById("topPerformersChart").getContext("2d"), {
+                type: "bar",
                 data: {
                     labels: topNames,
                     datasets: [{
-                        label: 'Vendas Líquidas (R$)',
+                        label: "Vendas Líquidas (R$)",
                         data: topVendasLiq,
-                        backgroundColor: 'rgba(255, 215, 0, 0.7)',
-                        borderColor: 'rgba(255, 215, 0, 1)',
+                        backgroundColor: "rgba(255, 215, 0, 0.7)",
+                        borderColor: "rgba(255, 215, 0, 1)",
                         borderWidth: 1
                     }]
                 },
@@ -496,18 +502,18 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                color: 'white'
+                                color: "white"
                             },
                             grid: {
-                                color: 'rgba(255,255,255,0.1)'
+                                color: "rgba(255,255,255,0.1)"
                             }
                         },
                         x: {
                             ticks: {
-                                color: 'white'
+                                color: "white"
                             },
                             grid: {
-                                color: 'rgba(255,255,255,0.1)'
+                                color: "rgba(255,255,255,0.1)"
                             }
                         }
                     },
@@ -520,31 +526,31 @@
             });
 
             // Zones Distribution Chart
-            const zoneCounts = { 'TÍTULOS': 0, 'LIBERTADORES': 0, 'SUL-AMERICANA': 0, 'INTERMEDIÁRIA': 0, 'REBAIXAMENTO': 0 };
-            [...corretores].sort((a, b) => b['V.Líq'] - a['V.Líq']).forEach((corretor, index) => {
+            const zoneCounts = { "TÍTULOS": 0, "LIBERTADORES": 0, "SUL-AMERICANA": 0, "INTERMEDIÁRIA": 0, "REBAIXAMENTO": 0 };
+            [...corretores].sort((a, b) => b["V.Líq"] - a["V.Líq"]).forEach((corretor, index) => {
                 const position = index + 1;
-                if (position >= 1 && position <= 3) zoneCounts['TÍTULOS']++;
-                else if (position >= 4 && position <= 12) zoneCounts['LIBERTADORES']++;
-                else if (position >= 13 && position <= 20) zoneCounts['SUL-AMERICANA']++;
-                else if (position >= 21 && position <= 28) zoneCounts['INTERMEDIÁRIA']++;
-                else zoneCounts['REBAIXAMENTO']++;
+                if (position >= 1 && position <= 3) zoneCounts["TÍTULOS"]++;
+                else if (position >= 4 && position <= 12) zoneCounts["LIBERTADORES"]++;
+                else if (position >= 13 && position <= 20) zoneCounts["SUL-AMERICANA"]++;
+                else if (position >= 21 && position <= 28) zoneCounts["INTERMEDIÁRIA"]++;
+                else zoneCounts["REBAIXAMENTO"]++;
             });
 
             if (zonesChart) zonesChart.destroy();
-            zonesChart = new Chart(document.getElementById('zonesChart').getContext('2d'), {
-                type: 'pie',
+            zonesChart = new Chart(document.getElementById("zonesChart").getContext("2d"), {
+                type: "pie",
                 data: {
                     labels: Object.keys(zoneCounts),
                     datasets: [{
                         data: Object.values(zoneCounts),
                         backgroundColor: [
-                            'rgba(255, 215, 0, 0.7)', // TÍTULOS
-                            'rgba(0, 255, 127, 0.7)', // LIBERTADORES
-                            'rgba(255, 165, 0, 0.7)', // SUL-AMERICANA
-                            'rgba(255, 140, 0, 0.7)', // INTERMEDIÁRIA
-                            'rgba(255, 68, 68, 0.7)'  // REBAIXAMENTO
+                            "rgba(255, 215, 0, 0.7)", // TÍTULOS
+                            "rgba(0, 255, 127, 0.7)", // LIBERTADORES
+                            "rgba(255, 165, 0, 0.7)", // SUL-AMERICANA
+                            "rgba(255, 140, 0, 0.7)", // INTERMEDIÁRIA
+                            "rgba(255, 68, 68, 0.7)"  // REBAIXAMENTO
                         ],
-                        borderColor: 'rgba(255,255,255,0.2)',
+                        borderColor: "rgba(255,255,255,0.2)",
                         borderWidth: 1
                     }]
                 },
@@ -554,7 +560,7 @@
                     plugins: {
                         legend: {
                             labels: {
-                                color: 'white'
+                                color: "white"
                             }
                         }
                     }
@@ -562,65 +568,65 @@
             });
 
             // Detailed Performance Chart
-            const performanceLabels = corretores.map(c => c['CORRETOR']);
-            const performanceVendasLiq = corretores.map(c => c['V.Líq']);
-            const performanceVendas = corretores.map(c => c['VENDAS']);
-            const performancePropostas = corretores.map(c => c['PROPOSTAS']);
-            const performanceVisitas = corretores.map(c => c['VISITAS']);
-            const performanceAgendamentos = corretores.map(c => c['AGENDAMENTOS']);
-            const performanceDistratos = corretores.map(c => c['DISTRATOS']);
+            const performanceLabels = corretores.map(c => c["CORRETOR"]);
+            const performanceVendasLiq = corretores.map(c => c["V.Líq"]);
+            const performanceVendas = corretores.map(c => c["VENDAS"]);
+            const performancePropostas = corretores.map(c => c["PROPOSTAS"]);
+            const performanceVisitas = corretores.map(c => c["VISITAS"]);
+            const performanceAgendamentos = corretores.map(c => c["AGENDAMENTOS"]);
+            const performanceDistratos = corretores.map(c => c["DISTRATOS"]);
 
             if (performanceChart) performanceChart.destroy();
-            performanceChart = new Chart(document.getElementById('performanceChart').getContext('2d'), {
-                type: 'line',
+            performanceChart = new Chart(document.getElementById("performanceChart").getContext("2d"), {
+                type: "line",
                 data: {
                     labels: performanceLabels,
                     datasets: [
                         {
-                            label: 'Vendas Líquidas (R$)',
+                            label: "Vendas Líquidas (R$)",
                             data: performanceVendasLiq,
-                            borderColor: 'rgba(255, 215, 0, 1)',
-                            backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                            borderColor: "rgba(255, 215, 0, 1)",
+                            backgroundColor: "rgba(255, 215, 0, 0.2)",
                             fill: true,
                             tension: 0.3
                         },
                         {
-                            label: 'Vendas',
+                            label: "Vendas",
                             data: performanceVendas,
-                            borderColor: 'rgba(0, 255, 127, 1)',
-                            backgroundColor: 'rgba(0, 255, 127, 0.2)',
+                            borderColor: "rgba(0, 255, 127, 1)",
+                            backgroundColor: "rgba(0, 255, 127, 0.2)",
                             fill: true,
                             tension: 0.3
                         },
                         {
-                            label: 'Propostas',
+                            label: "Propostas",
                             data: performancePropostas,
-                            borderColor: 'rgba(255, 165, 0, 1)',
-                            backgroundColor: 'rgba(255, 165, 0, 0.2)',
+                            borderColor: "rgba(255, 165, 0, 1)",
+                            backgroundColor: "rgba(255, 165, 0, 0.2)",
                             fill: true,
                             tension: 0.3
                         },
                         {
-                            label: 'Visitas',
+                            label: "Visitas",
                             data: performanceVisitas,
-                            borderColor: 'rgba(100, 149, 237, 1)',
-                            backgroundColor: 'rgba(100, 149, 237, 0.2)',
+                            borderColor: "rgba(100, 149, 237, 1)",
+                            backgroundColor: "rgba(100, 149, 237, 0.2)",
                             fill: true,
                             tension: 0.3
                         },
                         {
-                            label: 'Agendamentos',
+                            label: "Agendamentos",
                             data: performanceAgendamentos,
-                            borderColor: 'rgba(138, 43, 226, 1)',
-                            backgroundColor: 'rgba(138, 43, 226, 0.2)',
+                            borderColor: "rgba(138, 43, 226, 1)",
+                            backgroundColor: "rgba(138, 43, 226, 0.2)",
                             fill: true,
                             tension: 0.3
                         },
                         {
-                            label: 'Distratos',
+                            label: "Distratos",
                             data: performanceDistratos,
-                            borderColor: 'rgba(255, 68, 68, 1)',
-                            backgroundColor: 'rgba(255, 68, 68, 0.2)',
+                            borderColor: "rgba(255, 68, 68, 1)",
+                            backgroundColor: "rgba(255, 68, 68, 0.2)",
                             fill: true,
                             tension: 0.3
                         }
@@ -633,31 +639,86 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                color: 'white'
+                                color: "white"
                             },
                             grid: {
-                                color: 'rgba(255,255,255,0.1)'
+                                color: "rgba(255,255,255,0.1)"
                             }
                         },
                         x: {
                             ticks: {
-                                color: 'white'
+                                color: "white"
                             },
                             grid: {
-                                color: 'rgba(255,255,255,0.1)'
+                                color: "rgba(255,255,255,0.1)"
                             }
                         }
                     },
                     plugins: {
                         legend: {
                             labels: {
-                                color: 'white'
+                                color: "white"
                             }
                         }
                     }
                 }
             });
-        }
+
+            // Special Insights
+            const specialInsightsDiv = document.getElementById("specialInsights");
+            specialInsightsDiv.innerHTML = "";
+
+            const artilheiro = [...corretores].sort((a, b) => b["V.Líq"] - a["V.Líq"])[0];
+            const mestrePropostas = [...corretores].sort((a, b) => b["PROPOSTAS"] - a["PROPOSTAS"])[0];
+            const campeaoVisitas = [...corretores].sort((a, b) => b["VISITAS"] - a["VISITAS"])[0];
+            const reiAgendamentos = [...corretores].sort((a, b) => b["AGENDAMENTOS"] - a["AGENDAMENTOS"])[0];
+            const distrato = [...corretores].sort((a, b) => b["DISTRATOS"] - a["DISTRATOS"])[0];
+
+            if (artilheiro) {
+                specialInsightsDiv.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-title">🎯 Artilheiro</div>
+                        <div class="stat-name">${artilheiro["CORRETOR"]}</div>
+                        <div class="stat-desc">Mais vendas líquidas: ${artilheiro["V.Líq"]}</div>
+                    </div>
+                `;
+            }
+            if (mestrePropostas) {
+                specialInsightsDiv.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-title">📋 Mestre das Propostas</div>
+                        <div class="stat-name">${mestrePropostas["CORRETOR"]}</div>
+                        <div class="stat-desc">Mais propostas: ${mestrePropostas["PROPOSTAS"]}</div>
+                    </div>
+                `;
+            }
+            if (campeaoVisitas) {
+                specialInsightsDiv.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-title">🚗 Campeão das Visitas</div>
+                        <div class="stat-name">${campeaoVisitas["CORRETOR"]}</div>
+                        <div class="stat-desc">Mais visitas: ${campeaoVisitas["VISITAS"]}</div>
+                    </div>
+                `;
+            }
+            if (reiAgendamentos) {
+                specialInsightsDiv.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-title">📅 Rei dos Agendamentos</div>
+                        <div class="stat-name">${reiAgendamentos["CORRETOR"]}</div>
+                        <div class="stat-desc">Mais agendamentos: ${reiAgendamentos["AGENDAMENTOS"]}</div>
+                    </div>
+                `;
+            }
+            if (distrato) {
+                specialInsightsDiv.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-title">⚠️ Distrato</div>
+                        <div class="stat-name">${distrato["CORRETOR"]}</div>
+                        <div class="stat-desc">O que mais distratou: ${distrato["DISTRATOS"]}</div>
+                    </div>
+                `;
+            }
 
         // --- Export Functionality ---
         function exportToExcel() {
