@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Ranking Corretores</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        /* MAIN APP */
+        .app-container {
+            padding: 20px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .app-title {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            color: #000;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .ranking-section, .analytics-section, .export-section {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .stat-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .stat-desc {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .ranking-table {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 60px 50px 1fr 80px 80px 100px 80px 100px 80px;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .table-row {
+            padding: 12px 15px;
+            display: grid;
+            grid-template-columns: 60px 50px 1fr 80px 80px 100px 80px 100px 80px;
+            gap: 10px;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .table-row:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .titles { background: linear-gradient(90deg, rgba(255,215,0,0.2), rgba(255,215,0,0.05)); border-left: 4px solid #FFD700; }
+        .libertadores { background: linear-gradient(90deg, rgba(0,255,127,0.2), rgba(0,255,127,0.05)); border-left: 4px solid #00FF7F; }
+        .sulamericana { background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05)); border-left: 4px solid #FFA500; }
+        .intermediaria { background: linear-gradient(90deg, rgba(255,165,0,0.15), rgba(255,165,0,0.05)); border-left: 4px solid #FF8C00; }
+        .rebaixamento { background: linear-gradient(90deg, rgba(255,68,68,0.2), rgba(255,68,68,0.05)); border-left: 4px solid #FF4444; }
+
+        .zone-icon { font-size: 1.5rem; text-align: center; }
+        .position { font-size: 1.2rem; font-weight: bold; text-align: center; }
+        .name { font-weight: bold; font-size: 1rem; }
+        .stat-cell { text-align: center; font-weight: 500; }
+        .negative { color: #FF6B6B; }
+        .highlight { color: #FFD700; font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .table-header, .table-row {
+                grid-template-columns: 40px 30px 1fr 60px 60px 70px 60px 70px 60px;
+                gap: 5px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- MAIN APP -->
+    <div id="mainApp" class="app-container">
+        <div class="app-header">
+            <h1 class="app-title">🏆 Sistema Ranking Corretores</h1>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="ranking">🏆 Ver Ranking</button>
+            <button class="tab" data-tab="analytics">📈 Análises</button>
+            <button class="tab" data-tab="export">💾 Exportar</button>
+        </div>
+
+        <!-- RANKING TAB -->
+        <div id="ranking" class="tab-content active">
+            <div class="ranking-section">
+                <h2 style="text-align: center; margin-bottom: 30px;">Ranking 3º Trimestre - FORTPRIME</h2>
+                
+                <div id="statsGrid" class="stats-grid"></div>
+                
+                <div style="text-align: center; margin-bottom: 20px; font-size: 0.9rem;">
+                    <span style="margin: 0 10px;">🏆 TÍTULOS (1º-3º)</span>
+                    <span style="margin: 0 10px;">⭐ LIBERTADORES (4º-12º)</span>
+                    <span style="margin: 0 10px;">🟡 SUL-AMERICANA (13º-20º)</span>
+                    <span style="margin: 0 10px;">⚠️ INTERMEDIÁRIA (21º-28º)</span>
+                    <span style="margin: 0 10px;">🔴 REBAIXAMENTO (29º+)</span>
+                </div>
+
+                <div class="ranking-table">
+                    <div class="table-header">
+                        <div></div>
+                        <div>POS</div>
+                        <div>CORRETOR</div>
+                        <div>V. LÍQ</div>
+                        <div>VENDAS</div>
+                        <div>PROPOSTAS</div>
+                        <div>VISITAS</div>
+                        <div>AGENDAMENTOS</div>
+                        <div>DISTRATOS</div>
+                    </div>
+                    <div id="rankingTableBody"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS TAB -->
+        <div id="analytics" class="tab-content">
+            <div class="analytics-section">
+                <h2 style="margin-bottom: 20px;">📈 Análises e Gráficos</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-title">📊 Total de Corretores</div>
+                        <div class="stat-name" id="totalCorretores">0</div>
+                        <div class="stat-desc">corretores ativos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">💰 Total Vendas Líquidas</div>
+                        <div class="stat-name" id="totalVendasLiq">0</div>
+                        <div class="stat-desc">vendas realizadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">📋 Total Propostas</div>
+                        <div class="stat-name" id="totalPropostas">0</div>
+                        <div class="stat-desc">propostas enviadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">🎯 Taxa Conversão</div>
+                        <div class="stat-name" id="taxaConversao">0%</div>
+                        <div class="stat-desc">proposta → venda</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+                    <div class="stat-card" style="padding: 30px;">
+                        <h3 style="margin-bottom: 20px;">🏆 Top 5 Performers</h3>
+                        <canvas id="topPerformersChart" width="400" height="300"></canvas>
+                    </div>
+                    
+                    <div class="stat-card" style="padding: 30px;">
+                        <h3 style="margin-bottom: 20px;">📊 Distribuição por Zonas</h3>
+                        <canvas id="zonesChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="margin-top: 20px; padding: 30px;">
+                    <h3 style="margin-bottom: 20px;">📈 Performance Detalhada</h3>
+                    <canvas id="performanceChart" width="800" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXPORT TAB -->
+        <div id="export" class="tab-content">
+            <div class="export-section">
+                <h2 style="margin-bottom: 20px;">💾 Exportar Dados</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div class="stat-card" style="padding: 30px; cursor: pointer;" onclick="exportToExcel()">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">📊</div>
+                        <h3>Exportar para Excel</h3>
+                        <p style="opacity: 0.8; margin-top: 10px;">Baixar dados de ranking em formato Excel.</p>
+                    </div>
+                    <div class="stat-card" style="padding: 30px; cursor: pointer;" onclick="exportToPDF()">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">📄</div>
+                        <h3>Exportar para PDF</h3>
+                        <p style="opacity: 0.8; margin-top: 10px;">Gerar relatório de ranking em formato PDF.</p>
+                    </div>
+                    <div class="stat-card" style="padding: 30px; cursor: pointer;" onclick="exportToCSV()">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">📝</div>
+                        <h3>Exportar para CSV</h3>
+                        <p style="opacity: 0.8; margin-top: 10px;">Baixar dados brutos em formato CSV.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.14/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        const tabs = document.querySelectorAll(".tab");
+        const tabContents = document.querySelectorAll(".tab-content");
+        const rankingTableBody = document.getElementById("rankingTableBody");
+        const statsGrid = document.getElementById("statsGrid");
+        const totalCorretoresSpan = document.getElementById("totalCorretores");
+        const totalVendasLiqSpan = document.getElementById("totalVendasLiq");
+        const totalPropostasSpan = document.getElementById("totalPropostas");
+        const taxaConversaoSpan = document.getElementById("taxaConversao");
+
+        let corretores = []; // Global array to store fetched data
+
+        // --- Tab Switching ---
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                tabs.forEach(t => t.classList.remove("active"));
+                tabContents.forEach(tc => tc.classList.remove("active"));
+
+                tab.classList.add("active");
+                document.getElementById(tab.dataset.tab).classList.add("active");
+
+                // Update content when switching tabs
+                if (tab.dataset.tab === "ranking") {
+                    updateRanking();
+                } else if (tab.dataset.tab === "analytics") {
+                    updateAnalytics();
+                }
+            });
+        });
+
+        // --- Fetch Data from Google Sheets CSV ---
+        async function fetchGoogleSheetsData() {
+            // ** IMPORTANT: Replace with your Google Sheet's public CSV export URL **
+            // To get this URL:
+            // 1. Open your Google Sheet.
+            // 2. Go to File > Share > Publish to web.
+            // 3. Select the sheet you want to publish.
+            // 4. Choose 'Comma-separated values (.csv)' as the format.
+            // 5. Copy the generated URL.
+            const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQDYpxWCUYnOeVudRcz6ZmLhmM4xW6VvlrOW0EVSYj7Mm6GUTTFqvQOynHGZSJoWjaM9r3YBQmTbDJ/pub?gid=0&single=true&output=csv"; 
+
+            try {
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+                corretores = parseCSV(csvText);
+                console.log("Dados carregados do Google Sheets:", corretores);
+                updateAllContent();
+            } catch (error) {
+                console.error("Erro ao carregar dados do Google Sheets:", error);
+                alert("Erro ao carregar dados do Google Sheets. Verifique o console para mais detalhes.");
+            }
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split("\n").filter(line => line.trim() !== "");
+            if (lines.length === 0) return [];
+
+            let headerRowIndex = -1;
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].includes("RANKING,CRITERIO PRINCIPAL")) { 
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+
+            if (headerRowIndex === -1) {
+                console.error("Header row not found in CSV.");
+                return [];
+            }
+
+            const headers = lines[headerRowIndex].split(",").map(header => header.trim());
+            const data = [];
+
+            for (let i = headerRowIndex + 1; i < lines.length; i++) {
+                const values = lines[i].split(",").map(value => value.trim());
+                if (values.length !== headers.length) {
+                    console.warn(`Linha ${i + 1} ignorada devido a número inconsistente de colunas.`);
+                    continue;
+                }
+                const row = {};
+                headers.forEach((header, index) => {
+                    let value = values[index];
+                    // Map CSV headers to desired property names
+                    let propName = header;
+                    if (header === 'VENDAS LIQUIDAS') propName = 'V.Líq';
+                    if (header === 'CORRETORES') propName = 'CORRETOR';
+                    if (header === 'VENDAS') propName = 'VENDAS';
+                    if (header === 'PROPOSTA') propName = 'PROPOSTAS';
+                    if (header === 'VISITAS') propName = 'VISITAS';
+                    if (header === 'AGENDAMENTO') propName = 'AGENDAMENTOS';
+                    if (header === 'DISTRATOS') propName = 'DISTRATOS';
+
+                    // Attempt to convert numeric values
+                    if (!isNaN(value) && value !== '') {
+                        row[propName] = parseFloat(value);
+                    } else {
+                        row[propName] = value;
+                    }
+                });
+                data.push(row);
+            }
+            return data;
+        }
+
+        function updateAllContent() {
+            updateRanking();
+            updateAnalytics();
+        }
+
+        // --- Ranking Functionality ---
+        function updateRanking() {
+            const sortedCorretores = [...corretores].sort((a, b) => b['V.Líq'] - a['V.Líq']);
+            rankingTableBody.innerHTML = '';
+            statsGrid.innerHTML = '';
+
+            if (sortedCorretores.length === 0) {
+                rankingTableBody.innerHTML = '<div style="text-align: center; padding: 20px;">Nenhum corretor cadastrado.</div>';
+                return;
+            }
+
+            // Update Stats Grid
+            const top3 = sortedCorretores.slice(0, 3);
+            const statsHtml = top3.map((c, index) => `
+                <div class="stat-card">
+                    <div class="stat-title">${index === 0 ? 'Líder' : index === 1 ? 'Vice-Líder' : '3º Colocado'}</div>
+                    <div class="stat-name">${c['CORRETOR']}</div>
+                    <div class="stat-desc">Vendas Líquidas: ${c["V.Líq"].toFixed(0)}</div>
+                </div>
+            `).join('');
+            statsGrid.innerHTML = statsHtml;
+
+            // Update Ranking Table
+            sortedCorretores.forEach((corretor, index) => {
+                const position = index + 1;
+                let zoneClass = '';
+                let zoneIcon = '';
+
+                if (position >= 1 && position <= 3) {
+                    zoneClass = 'titles';
+                    zoneIcon = '🏆';
+                } else if (position >= 4 && position <= 12) {
+                    zoneClass = 'libertadores';
+                    zoneIcon = '⭐';
+                } else if (position >= 13 && position <= 20) {
+                    zoneClass = 'sulamericana';
+                    zoneIcon = '🟡';
+                } else if (position >= 21 && position <= 28) {
+                    zoneClass = 'intermediaria';
+                    zoneIcon = '⚠️';
+                } else {
+                    zoneClass = 'rebaixamento';
+                    zoneIcon = '🔴';
+                }
+
+                const row = document.createElement('div');
+                row.classList.add('table-row', zoneClass);
+                row.innerHTML = `
+                    <div class="zone-icon">${zoneIcon}</div>
+                    <div class="position">${position}</div>
+                    <div class="name">${corretor['CORRETOR']}</div>
+                    <div class="stat-cell highlight">${corretor["V.Líq"].toFixed(0)}</div>
+                    <div class="stat-cell">${corretor['VENDAS']}</div>
+                    <div class="stat-cell">${corretor['PROPOSTAS']}</div>
+                    <div class="stat-cell">${corretor['VISITAS']}</div>
+                    <div class="stat-cell">${corretor['AGENDAMENTOS']}</div>
+                    <div class="stat-cell ${corretor['DISTRATOS'] > 0 ? 'negative' : ''}">${corretor['DISTRATOS']}</div>
+                `;
+                rankingTableBody.appendChild(row);
+            });
+        }
+
+        // --- Analytics Functionality ---
+        let topPerformersChart, zonesChart, performanceChart;
+
+        function updateAnalytics() {
+            const totalCorretores = corretores.length;
+            const totalVendasLiq = corretores.reduce((sum, c) => sum + c['V.Líq'], 0);
+            const totalPropostas = corretores.reduce((sum, c) => sum + c['PROPOSTAS'], 0);
+            const totalVendas = corretores.reduce((sum, c) => sum + c['VENDAS'], 0);
+
+            totalCorretoresSpan.textContent = totalCorretores;
+            totalVendasLiqSpan.textContent = `${totalVendasLiq.toFixed(0)}`;
+            totalPropostasSpan.textContent = totalPropostas;
+            
+            const taxaConversao = totalPropostas > 0 ? ((totalVendas / totalPropostas) * 100).toFixed(2) : 0;
+            taxaConversaoSpan.textContent = `${taxaConversao}%`;
+
+            // Top 5 Performers Chart
+            const sortedByVendasLiq = [...corretores].sort((a, b) => b['V.Líq'] - a['V.Líq']).slice(0, 5);
+            const topNames = sortedByVendasLiq.map(c => c['CORRETOR']);
+            const topVendasLiq = sortedByVendasLiq.map(c => c['V.Líq']);
+
+            if (topPerformersChart) topPerformersChart.destroy();
+            topPerformersChart = new Chart(document.getElementById('topPerformersChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: topNames,
+                    datasets: [{
+                        label: 'Vendas Líquidas (R$)',
+                        data: topVendasLiq,
+                        backgroundColor: 'rgba(255, 215, 0, 0.7)',
+                        borderColor: 'rgba(255, 215, 0, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: 'white'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'white'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Zones Distribution Chart
+            const zoneCounts = { 'TÍTULOS': 0, 'LIBERTADORES': 0, 'SUL-AMERICANA': 0, 'INTERMEDIÁRIA': 0, 'REBAIXAMENTO': 0 };
+            [...corretores].sort((a, b) => b['V.Líq'] - a['V.Líq']).forEach((corretor, index) => {
+                const position = index + 1;
+                if (position >= 1 && position <= 3) zoneCounts['TÍTULOS']++;
+                else if (position >= 4 && position <= 12) zoneCounts['LIBERTADORES']++;
+                else if (position >= 13 && position <= 20) zoneCounts['SUL-AMERICANA']++;
+                else if (position >= 21 && position <= 28) zoneCounts['INTERMEDIÁRIA']++;
+                else zoneCounts['REBAIXAMENTO']++;
+            });
+
+            if (zonesChart) zonesChart.destroy();
+            zonesChart = new Chart(document.getElementById('zonesChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(zoneCounts),
+                    datasets: [{
+                        data: Object.values(zoneCounts),
+                        backgroundColor: [
+                            'rgba(255, 215, 0, 0.7)', // TÍTULOS
+                            'rgba(0, 255, 127, 0.7)', // LIBERTADORES
+                            'rgba(255, 165, 0, 0.7)', // SUL-AMERICANA
+                            'rgba(255, 140, 0, 0.7)', // INTERMEDIÁRIA
+                            'rgba(255, 68, 68, 0.7)'  // REBAIXAMENTO
+                        ],
+                        borderColor: 'rgba(255,255,255,0.2)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Detailed Performance Chart
+            const performanceLabels = corretores.map(c => c['CORRETOR']);
+            const performanceVendasLiq = corretores.map(c => c['V.Líq']);
+            const performanceVendas = corretores.map(c => c['VENDAS']);
+            const performancePropostas = corretores.map(c => c['PROPOSTAS']);
+            const performanceVisitas = corretores.map(c => c['VISITAS']);
+            const performanceAgendamentos = corretores.map(c => c['AGENDAMENTOS']);
+            const performanceDistratos = corretores.map(c => c['DISTRATOS']);
+
+            if (performanceChart) performanceChart.destroy();
+            performanceChart = new Chart(document.getElementById('performanceChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: performanceLabels,
+                    datasets: [
+                        {
+                            label: 'Vendas Líquidas (R$)',
+                            data: performanceVendasLiq,
+                            borderColor: 'rgba(255, 215, 0, 1)',
+                            backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Vendas',
+                            data: performanceVendas,
+                            borderColor: 'rgba(0, 255, 127, 1)',
+                            backgroundColor: 'rgba(0, 255, 127, 0.2)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Propostas',
+                            data: performancePropostas,
+                            borderColor: 'rgba(255, 165, 0, 1)',
+                            backgroundColor: 'rgba(255, 165, 0, 0.2)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Visitas',
+                            data: performanceVisitas,
+                            borderColor: 'rgba(100, 149, 237, 1)',
+                            backgroundColor: 'rgba(100, 149, 237, 0.2)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Agendamentos',
+                            data: performanceAgendamentos,
+                            borderColor: 'rgba(138, 43, 226, 1)',
+                            backgroundColor: 'rgba(138, 43, 226, 0.2)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Distratos',
+                            data: performanceDistratos,
+                            borderColor: 'rgba(255, 68, 68, 1)',
+                            backgroundColor: 'rgba(255, 68, 68, 0.2)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: 'white'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'white'
+                            },
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Export Functionality ---
+        function exportToExcel() {
+            const ws = XLSX.utils.json_to_sheet(corretores);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "CorretoresRanking");
+            XLSX.writeFile(wb, "ranking_corretores.xlsx");
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.text("Ranking de Corretores - FORTPRIME", 14, 16);
+            doc.autoTable({
+                startY: 20,
+                head: [['CORRETOR', 'V.Líq', 'VENDAS', 'PROPOSTAS', 'VISITAS', 'AGENDAMENTOS', 'DISTRATOS']],
+                body: corretores.map(c => [c['CORRETOR'], c['V.Líq'], c['VENDAS'], c['PROPOSTAS'], c['VISITAS'], c['AGENDAMENTOS'], c['DISTRATOS']]),
+                theme: 'grid',
+                styles: { fillColor: [2, 117, 216] },
+                headStyles: { fillColor: [2, 117, 216] },
+                alternateRowStyles: { fillColor: [240, 240, 240] }
+            });
+            doc.save("ranking_corretores.pdf");
+        }
+
+        function exportToCSV() {
+            let csvContent = "CORRETOR,V.Líq,VENDAS,PROPOSTAS,VISITAS,AGENDAMENTOS,DISTRATOS\n";
+            corretores.forEach(c => {
+                csvContent += `${c['CORRETOR']},${c['V.Líq']},${c['VENDAS']},${c['PROPOSTAS']},${c['VISITAS']},${c['AGENDAMENTOS']},${c['DISTRATOS']}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', 'ranking_corretores.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initial data load
+        document.addEventListener('DOMContentLoaded', fetchGoogleSheetsData);
+
+    </script>
+</body>
+</html>
+
+
